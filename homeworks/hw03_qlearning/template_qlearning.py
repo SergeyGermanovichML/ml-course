@@ -26,9 +26,9 @@ class QLearningAgent:
         Q-Learning Agent
         based on https://inst.eecs.berkeley.edu/~cs188/sp19/projects.html
         Instance variables you have access to
-          - self.epsilon (exploration prob)
           - self.alpha (learning rate)
           - self.discount (discount rate aka gamma)
+          - self.temp (softmax temperature)
 
         Functions you should use
           - self.get_legal_actions(state) {state, hashable -> list of actions, each is hashable}
