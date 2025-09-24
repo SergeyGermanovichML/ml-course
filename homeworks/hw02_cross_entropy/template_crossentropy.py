@@ -2,8 +2,9 @@
 
 import numpy as np
 
-n_states = 500 # for Taxi-v3
-n_actions = 6 # for Taxi-v3
+n_states = 500  # for Taxi-v3
+n_actions = 6  # for Taxi-v3
+
 
 def select_elites(states_batch, actions_batch, rewards_batch, percentile=50):
     """
@@ -28,8 +29,8 @@ def select_elites(states_batch, actions_batch, rewards_batch, percentile=50):
             result[0] += states_batch[i]
             result[1] += actions_batch[i]
 
-
     return result
+
 
 def update_policy(elite_states, elite_actions, n_states=n_states, n_actions=n_actions):
     """
@@ -45,11 +46,12 @@ def update_policy(elite_states, elite_actions, n_states=n_states, n_actions=n_ac
     :param elite_actions: 1D list of actions from elite sessions
 
     """
+    smoothing = 0.1
     # Шаг 1: Создаем новую политику с равномерным распределением
     new_policy = np.ones((n_states, n_actions)) / n_actions
 
     # Шаг 2: Создаем матрицу для подсчета посещений (state-action counts)
-    state_action_counts = np.zeros((n_states, n_actions))
+    state_action_counts = np.zeros((n_states, n_actions)) * smoothing
 
     # Шаг 3: Подсчитываем, сколько раз каждое действие выбиралось в каждом состоянии
     for state, action in zip(elite_states, elite_actions):
@@ -64,12 +66,14 @@ def update_policy(elite_states, elite_actions, n_states=n_states, n_actions=n_ac
 
     return new_policy
 
+
 def generate_session(env, policy, t_max=int(10**4)):
     """
     Play game until end or for t_max ticks.
     :param policy: an array of shape [n_states,n_actions] with action probabilities
     :returns: list of states, list of actions and sum of rewards
     """
+    n_actions = policy.shape[1]
     states, actions = [], []
     total_reward = 0.
 
@@ -88,6 +92,6 @@ def generate_session(env, policy, t_max=int(10**4)):
         total_reward += r
 
         s = new_s
-        if done:
+        if done or truncated:
             break
     return states, actions, total_reward
