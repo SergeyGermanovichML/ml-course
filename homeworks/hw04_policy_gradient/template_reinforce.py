@@ -22,7 +22,11 @@ def predict_probs(states, model):
     # convert states, compute logits, use softmax to get probability
 
     # YOUR CODE GOES HERE
-    probs = None
+    states_tensor = torch.Tensor(states)
+    
+    with torch.no_grad():
+        logits = model(states_tensor)
+        probs = torch.softmax(logits, dim=-1).numpy()
     assert probs is not None, "probs is not defined"
 
     return probs
@@ -42,7 +46,12 @@ def get_cumulative_rewards(rewards,  # rewards at each step
     You must return an array/list of cumulative rewards with as many elements as in the initial rewards.
     """
     # YOUR CODE GOES HERE
-    cumulative_rewards = None
+    n = len(rewards)
+    cumulative_rewards = np.zeros(n)
+    G = 0
+    for i in reversed(range(n)):
+        G = rewards[i] + gamma * G
+        cumulative_rewards[i] = G
     assert cumulative_rewards is not None, "cumulative_rewards is not defined"
 
     return cumulative_rewards
@@ -55,25 +64,25 @@ def get_loss(logits, actions, rewards, n_actions=n_actions, gamma=0.99, entropy_
     cumulative_returns = np.array(get_cumulative_rewards(rewards, gamma))
     cumulative_returns = torch.tensor(cumulative_returns, dtype=torch.float32)
 
-    probs = None
+    probs = nn.functional.softmax(logits, dim=-1)
     assert probs is not None, "probs is not defined"
 
-    log_probs = None
+    log_probs = nn.functional.log_softmax(logits, dim=-1)
     assert log_probs is not None, "log_probs is not defined"
 
     assert all(isinstance(v, torch.Tensor) for v in [logits, probs, log_probs]), \
         "please use compute using torch tensors and don't use predict_probs function"
 
     # select log-probabilities for chosen actions, log pi(a_i|s_i)
-    log_probs_for_actions = None # [batch,]
+    log_probs_for_actions = log_probs[range(len(actions)), actions] # [batch,]
     assert log_probs_for_actions is not None, "log_probs_for_actions is not defined"
-    J_hat = None  # a number
+    J_hat = (log_probs_for_actions * cumulative_returns).mean() # a number
     assert J_hat is not None, "J_hat is not defined"
     
     # Compute loss here. Don't forget entropy regularization with `entropy_coef`
-    entropy = None
+    entropy = -torch.sum(probs * log_probs, dim=-1).mean()
     assert entropy is not None, "entropy is not defined"
-    loss = None
+    loss = -J_hat - entropy_coef * entropy
     assert loss is not None, "loss is not defined"
 
     return loss
