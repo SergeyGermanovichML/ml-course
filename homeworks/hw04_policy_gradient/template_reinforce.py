@@ -2,6 +2,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+n_actions = 2
+
 def to_one_hot(y_tensor, ndims):
     """ helper: take an integer vector and convert it to 1-hot matrix. """
     y_tensor = y_tensor.type(torch.LongTensor).view(-1, 1)
@@ -10,10 +12,11 @@ def to_one_hot(y_tensor, ndims):
     return y_one_hot
 
 
-def predict_probs(states):
+def predict_probs(states, model):
     """
     Predict action probabilities given states.
     :param states: numpy array of shape [batch, state_shape]
+    :param model: torch model
     :returns: numpy array of shape [batch, n_actions]
     """
     # convert states, compute logits, use softmax to get probability
@@ -44,18 +47,13 @@ def get_cumulative_rewards(rewards,  # rewards at each step
 
     return cumulative_rewards
 
-def get_loss(states, actions, rewards, gamma=0.99, entropy_coef=1e-2):
+def get_loss(logits, actions, rewards, n_actions=n_actions, gamma=0.99, entropy_coef=1e-2):
     """
     Compute the loss for the REINFORCE algorithm.
     """
-    states = torch.tensor(states, dtype=torch.float32)
     actions = torch.tensor(actions, dtype=torch.int32)
     cumulative_returns = np.array(get_cumulative_rewards(rewards, gamma))
     cumulative_returns = torch.tensor(cumulative_returns, dtype=torch.float32)
-
-    # predict logits, probas and log-probas using an agent.
-    logits = None
-    assert logits is not None, "logits is not defined"
 
     probs = None
     assert probs is not None, "probs is not defined"
